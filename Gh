@@ -1,0 +1,150 @@
+```lua
+--// Immortal GUI | Roblox Studio LocalScript
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "ImmortalGUI"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Main
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 230, 0, 125)
+main.Position = UDim2.new(0.5, -115, 0.5, -60)
+main.BackgroundColor3 = Color3.fromRGB(20,20,25)
+main.BorderSizePixel = 0
+main.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 18)
+corner.Parent = main
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(90,90,100)
+stroke.Thickness = 2
+stroke.Parent = main
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,42)
+title.BackgroundTransparency = 1
+title.Text = "☠  IMMORTAL"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextSize = 21
+title.Font = Enum.Font.GothamBold
+title.Parent = main
+
+-- Toggle
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.new(0, 185, 0, 48)
+toggle.Position = UDim2.new(0.5, -92, 0, 58)
+toggle.BackgroundColor3 = Color3.fromRGB(45,45,50)
+toggle.Text = "IMMORTAL : OFF"
+toggle.TextColor3 = Color3.fromRGB(255,255,255)
+toggle.TextSize = 17
+toggle.Font = Enum.Font.GothamBold
+toggle.BorderSizePixel = 0
+toggle.Parent = main
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 14)
+toggleCorner.Parent = toggle
+
+local immortal = false
+local connection
+
+local function setImmortal(state)
+	immortal = state
+
+	if connection then
+		connection:Disconnect()
+		connection = nil
+	end
+
+	if immortal then
+		toggle.Text = "IMMORTAL : ON"
+		toggle.BackgroundColor3 = Color3.fromRGB(0, 170, 90)
+
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+		if humanoid then
+			humanoid.MaxHealth = math.huge
+			humanoid.Health = math.huge
+
+			connection = humanoid.HealthChanged:Connect(function()
+				if immortal then
+					humanoid.Health = humanoid.MaxHealth
+				end
+			end)
+		end
+	else
+		toggle.Text = "IMMORTAL : OFF"
+		toggle.BackgroundColor3 = Color3.fromRGB(45,45,50)
+	end
+end
+
+toggle.MouseButton1Click:Connect(function()
+	setImmortal(not immortal)
+end)
+
+-- Reapply after respawn
+player.CharacterAdded:Connect(function(character)
+	if immortal then
+		local humanoid = character:WaitForChild("Humanoid")
+		humanoid.MaxHealth = math.huge
+		humanoid.Health = math.huge
+
+		if connection then
+			connection:Disconnect()
+		end
+
+		connection = humanoid.HealthChanged:Connect(function()
+			if immortal then
+				humanoid.Health = humanoid.MaxHealth
+			end
+		end)
+	end
+end)
+
+--// Drag GUI
+local UIS = game:GetService("UserInputService")
+
+local dragging = false
+local dragStart
+local startPos
+
+main.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and
+		(input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch) then
+
+		local delta = input.Position - dragStart
+
+		main.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+```
